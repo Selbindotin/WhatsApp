@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Quick Sender</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in { animation: fadeIn 1s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-up { animation: slideUp 0.6s ease-in-out; }
+    @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+
+  <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md slide-up">
+    <h2 class="text-2xl font-bold text-center mb-6 text-green-600">WhatsApp Quick Sender</h2>
+
+    <div class="mb-4">
+      <label class="block mb-1 font-semibold text-gray-700">Country</label>
+      <select id="countryCode" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"></select>
+    </div>
+
+    <div class="mb-4">
+      <label class="block mb-1 font-semibold text-gray-700">Mobile Number</label>
+      <input type="tel" id="mobileNumber" placeholder="Enter number" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+    </div>
+
+    <div class="mb-6">
+      <label class="block mb-1 font-semibold text-gray-700">Message (optional)</label>
+      <textarea id="message" rows="2" placeholder="Type a message…" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+    </div>
+
+    <button onclick="sendMessage()" class="w-full bg-green-600 text-white p-3 rounded-md text-lg font-semibold hover:bg-green-700 transition duration-300 shadow">
+      🚀 Send
+    </button>
+  </div>
+
+  <script>
+    // Country list: [Name, DialCode, ISO code]
+    const countries = [
+      ["Afghanistan","+93","AF"],["Albania","+355","AL"],["Algeria","+213","DZ"],["Andorra","+376","AD"],
+      ["Angola","+244","AO"],["Argentina","+54","AR"],["Armenia","+374","AM"],["Australia","+61","AU"],
+      ["Austria","+43","AT"],["Azerbaijan","+994","AZ"],["Bahamas","+1","BS"],["Bahrain","+973","BH"],
+      ["Bangladesh","+880","BD"],["Belarus","+375","BY"],["Belgium","+32","BE"],["Belize","+501","BZ"],
+      ["Benin","+229","BJ"],["Bhutan","+975","BT"],["Bolivia","+591","BO"],["Bosnia & Herzegovina","+387","BA"],
+      ["Botswana","+267","BW"],["Brazil","+55","BR"],["Brunei","+673","BN"],["Bulgaria","+359","BG"],
+      ["Burkina Faso","+226","BF"],["Burundi","+257","BI"],["Cambodia","+855","KH"],["Cameroon","+237","CM"],
+      ["Canada","+1","CA"],["Cape Verde","+238","CV"],["Central African Republic","+236","CF"],
+      ["Chad","+235","TD"],["Chile","+56","CL"],["China","+86","CN"],["Colombia","+57","CO"],
+      ["Comoros","+269","KM"],["Costa Rica","+506","CR"],["Croatia","+385","HR"],["Cuba","+53","CU"],
+      ["Cyprus","+357","CY"],["Czech Republic","+420","CZ"],["DR Congo","+243","CD"],
+      ["Denmark","+45","DK"],["Djibouti","+253","DJ"],["Dominica","+1","DM"],["Dominican Republic","+1","DO"],
+      ["Ecuador","+593","EC"],["Egypt","+20","EG"],["El Salvador","+503","SV"],["Equatorial Guinea","+240","GQ"],
+      ["Eritrea","+291","ER"],["Estonia","+372","EE"],["Eswatini","+268","SZ"],["Ethiopia","+251","ET"],
+      ["Fiji","+679","FJ"],["Finland","+358","FI"],["France","+33","FR"],["Gabon","+241","GA"],["Gambia","+220","GM"],
+      ["Georgia","+995","GE"],["Germany","+49","DE"],["Ghana","+233","GH"],["Greece","+30","GR"],
+      ["Grenada","+1","GD"],["Guatemala","+502","GT"],["Guinea","+224","GN"],["Guinea‑Bissau","+245","GW"],
+      ["Guyana","+592","GY"],["Haiti","+509","HT"],["Honduras","+504","HN"],["Hungary","+36","HU"],
+      ["Iceland","+354","IS"],["India","+91","IN"],["Indonesia","+62","ID"],["Iran","+98","IR"],
+      ["Iraq","+964","IQ"],["Ireland","+353","IE"],["Israel","+972","IL"],["Italy","+39","IT"],
+      ["Jamaica","+1","JM"],["Japan","+81","JP"],["Jordan","+962","JO"],["Kazakhstan","+7","KZ"],
+      ["Kenya","+254","KE"],["Kiribati","+686","KI"],["Kosovo","+383","XK"],["Kuwait","+965","KW"],
+      ["Kyrgyzstan","+996","KG"],["Laos","+856","LA"],["Latvia","+371","LV"],["Lebanon","+961","LB"],
+      ["Lesotho","+266","LS"],["Liberia","+231","LR"],["Libya","+218","LY"],["Liechtenstein","+423","LI"],
+      ["Lithuania","+370","LT"],["Luxembourg","+352","LU"],["Madagascar","+261","MG"],["Malawi","+265","MW"],
+      ["Malaysia","+60","MY"],["Maldives","+960","MV"],["Mali","+223","ML"],["Malta","+356","MT"],
+      ["Marshall Islands","+692","MH"],["Mauritania","+222","MR"],["Mauritius","+230","MU"],
+      ["Mexico","+52","MX"],["Micronesia","+691","FM"],["Moldova","+373","MD"],["Monaco","+377","MC"],
+      ["Mongolia","+976","MN"],["Montenegro","+382","ME"],["Morocco","+212","MA"],["Mozambique","+258","MZ"],
+      ["Myanmar","+95","MM"],["Namibia","+264","NA"],["Nauru","+674","NR"],["Nepal","+977","NP"],
+      ["Netherlands","+31","NL"],["New Zealand","+64","NZ"],["Nicaragua","+505","NI"],["Niger","+227","NE"],
+      ["Nigeria","+234","NG"],["North Macedonia","+389","MK"],["Norway","+47","NO"],["Oman","+968","OM"],
+      ["Pakistan","+92","PK"],["Palau","+680","PW"],["Panama","+507","PA"],["Papua New Guinea","+675","PG"],
+      ["Paraguay","+595","PY"],["Peru","+51","PE"],["Philippines","+63","PH"],["Poland","+48","PL"],
+      ["Portugal","+351","PT"],["Qatar","+974","QA"],["Romania","+40","RO"],["Russia","+7","RU"],
+      ["Rwanda","+250","RW"],["Saint Kitts & Nevis","+1","KN"],["Saint Lucia","+1","LC"],
+      ["Saint Vincent & The Grenadines","+1","VC"],["Samoa","+685","WS"],["San Marino","+379","SM"],
+      ["Sao Tome & Principe","+239","ST"],["Saudi Arabia","+966","SA"],["Senegal","+221","SN"],
+      ["Serbia","+381","RS"],["Seychelles","+248","SC"],["Sierra Leone","+232","SL"],
+      ["Singapore","+65","SG"],["Slovakia","+421","SK"],["Slovenia","+386","SI"],
+      ["Solomon Islands","+677","SB"],["Somalia","+252","SO"],["South Africa","+27","ZA"],
+      ["South Korea","+82","KR"],["South Sudan","+211","SS"],["Spain","+34","ES"],["Sri Lanka","+94","LK"],
+      ["Sudan","+249","SD"],["Suriname","+597","SR"],["Sweden","+46","SE"],["Switzerland","+41","CH"],
+      ["Syria","+963","SY"],["Taiwan","+886","TW"],["Tajikistan","+992","TJ"],["Tanzania","+255","TZ"],
+      ["Thailand","+66","TH"],["Timor‑Leste","+670","TL"],["Togo","+228","TG"],["Tonga","+676","TO"],
+      ["Trinidad & Tobago","+1","TT"],["Tunisia","+216","TN"],["Turkey","+90","TR"],
+      ["Turkmenistan","+993","TM"],["Tuvalu","+688","TV"],["Uganda","+256","UG"],
+      ["Ukraine","+380","UA"],["United Arab Emirates","+971","AE"],["United Kingdom","+44","GB"],
+      ["United States","+1","US"],["Uruguay","+598","UY"],["Uzbekistan","+998","UZ"],
+      ["Vanuatu","+678","VU"],["Vatican City","+379","VA"],["Venezuela","+58","VE"],
+      ["Vietnam","+84","VN"],["Yemen","+967","YE"],["Zambia","+260","ZM"],["Zimbabwe","+263","ZW"]
+    ];
+
+    // Populate country select
+    const sel = document.getElementById('countryCode');
+    countries.forEach(([name, code, iso]) => {
+      const opt = document.createElement('option');
+      opt.value = code.replace('+','');
+      opt.text = `${name} (${code})`;
+      if (iso === 'IN') opt.selected = true;
+      sel.appendChild(opt);
+    });
+
+    function sendMessage() {
+      const code = document.getElementById('countryCode').value;
+      const num = document.getElementById('mobileNumber').value.trim().replace(/\D/g,'');
+      const msg = encodeURIComponent(document.getElementById('message').value.trim());
+
+      if (!num.match(/^\d{7,15}$/)) {
+        alert('Enter valid phone number (7–15 digits).');
+        return;
+      }
+
+      const full = code + num;
+      let url = `https://wa.me/${full}`;
+      if (msg) url += `?text=${msg}`;
+      window.open(url, '_blank');
+    }
+  </script>
+</body>
+</html>
